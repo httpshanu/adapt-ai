@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  # Piston - 100% Free & Open-Source Code Execution Engine
+  piston:
+    image: ghcr.io/engineer-man/piston
+    container_name: codeadapt-piston
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "2000:2000"
+    volumes:
+      - piston_packages:/piston/packages
+    environment:
+      - PISTON_BIND_ADDRESS=0.0.0.0:2000
+
+volumes:
+  piston_packages:
