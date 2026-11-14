@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
+  Bug,
   Code2, 
   FileText, 
   Flame, 
@@ -11,6 +12,7 @@ import {
   LayoutDashboard, 
   MessageSquare, 
   Settings, 
+  Swords,
   Trophy, 
   Users 
 } from 'lucide-react';
@@ -25,12 +27,24 @@ export default function AppSidebar() {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { 
+      href: '/duel', 
+      label: '1v1 Code Clash', 
+      icon: Swords, 
+      highlight: true,
+      badge: 'PvP ⚔️' 
+    },
+    { 
+      href: '/debugger', 
+      label: 'Spot the Bug', 
+      icon: Bug, 
+      badge: '60s 🐛' 
+    },
     { href: '/catalog', label: 'Problem Catalog', icon: Layers },
     { 
       href: '/daily-quiz', 
       label: 'Daily Blitz', 
       icon: Flame, 
-      highlight: true,
       badge: 'Quiz 🔥' 
     },
     { 

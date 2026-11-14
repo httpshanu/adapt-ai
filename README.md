@@ -15,6 +15,8 @@
 **CodeAdapt AI** is an intelligent coding platform engineered to eliminate one-size-fits-all coding education. By tracking student micro-behaviors, syntax mistakes, execution speed, and pass/fail distributions, CodeAdapt dynamically calculates continuous rolling exponential mastery scores and serves targeted problem variations.
 
 ### Key Capabilities:
+- ⚔️ **1v1 Live Code Duel (Speed Battle)**: Real-time split-screen PvP racing where students compete against peers or AI challengers to pass test cases first, earning Elo rating points!
+- 🐛 **Spot the Bug (Debugger Blitz)**: 60-second code-hunting rush to fix hidden pointer, recursion, and off-by-one errors for fast XP and combo streaks.
 - 👥 **Multi-Account Profile Switcher**: Switch instantly between preloaded demo student profiles (Arjun, Riya, Dev, Sanidhya) or create custom student accounts with isolated progress data.
 - 🏆 **Arena Leaderboard & XP Leagues**: Dynamic tiered competition (Bronze 🥉, Silver 🥈, Gold 🥇, Diamond 💎, Grandmaster 👑) with an animated Top-3 podium and weekly sprints.
 - 🔥 **Daily DSA Blitz Quizzes**: 3 daily algorithmic MCQs with countdown timers, instant explanations, confetti celebrations, and streak preservation.

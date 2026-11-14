@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   Brain, 
+  Bug, 
   Code2, 
   Flame, 
   LayoutDashboard, 
   MessageSquare, 
+  Swords, 
   Terminal, 
   Trophy, 
   User, 
@@ -25,11 +27,12 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/duel', label: '1v1 Duel', icon: Swords, badge: 'PvP ⚔️', highlight: true },
+    { href: '/debugger', label: 'Bug Hunter', icon: Bug, badge: '60s 🐛' },
     { href: '/problems', label: 'Problems', icon: Code2 },
     { href: '/daily-quiz', label: 'Daily Blitz', icon: Flame, badge: 'Quiz' },
-    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy, badge: 'Top 10' },
-    { href: '/lounge', label: 'Code Lounge', icon: MessageSquare, badge: 'Discord' },
-    { href: '/sandbox', label: 'Sandbox', icon: Terminal },
+    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+    { href: '/lounge', label: 'Code Lounge', icon: MessageSquare },
   ];
 
   const tier = LEAGUE_TIER_CONFIG[currentAccount.league];
@@ -58,7 +61,7 @@ export default function Navbar() {
           </Link>
 
           {/* Center Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden xl:flex items-center gap-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname.startsWith(link.href);
@@ -66,7 +69,7 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 relative ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 relative ${
                     isActive
                       ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -75,7 +78,9 @@ export default function Navbar() {
                   <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
                   <span>{link.label}</span>
                   {link.badge && !isActive && (
-                    <span className="text-[9px] font-extrabold px-1 py-0.2 rounded-full bg-amber-100 text-amber-800 ml-0.5">
+                    <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded-full ml-0.5 ${
+                      link.highlight ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
+                    }`}>
                       {link.badge}
                     </span>
                   )}
@@ -86,15 +91,22 @@ export default function Navbar() {
 
           {/* Right Header Status & Account Switcher */}
           <div className="flex items-center gap-3">
-            {/* Streak & XP Badges */}
+            {/* Streak & Elo Badges */}
             <div className="hidden sm:flex items-center gap-2">
+              <Link
+                href="/duel"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold hover:bg-rose-100 transition-colors"
+                title="Current 1v1 Arena Elo"
+              >
+                <span>⚔️ {currentAccount.eloRating || 1200} Elo</span>
+              </Link>
               <Link
                 href="/daily-quiz"
                 className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-colors"
                 title="Current Daily Streak"
               >
                 <Flame className="h-3.5 w-3.5 fill-amber-500 text-amber-500 animate-pulse" />
-                <span>{currentAccount.streak}d Streak</span>
+                <span>{currentAccount.streak}d</span>
               </Link>
               <Link
                 href="/leaderboard"

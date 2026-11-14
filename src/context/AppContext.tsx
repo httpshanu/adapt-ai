@@ -39,6 +39,7 @@ import {
   generateBotResponse 
 } from '../lib/communityData';
 import { getTodayDateKey } from '../lib/dailyQuizData';
+import { calculateEloChange } from '../lib/duelEngine';
 
 export interface AppContextType {
   // Account Management
@@ -64,6 +65,10 @@ export interface AppContextType {
   channelMessages: Record<string, ChatMessage[]>;
   sendChatMessage: (channelId: string, content: string, codeSnippet?: { language: string; code: string }) => void;
   toggleReaction: (channelId: string, messageId: string, emoji: string) => void;
+
+  // 1v1 Arena & Debugger Blitz
+  recordDuelOutcome: (won: boolean, opponentElo: number) => { playerChange: number; newElo: number };
+  recordBugFixed: (challengeId: string, xpEarned: number) => void;
 
   // Core Learning Engine
   diagnosticCompleted: boolean;
@@ -114,6 +119,10 @@ export const INITIAL_DEMO_ACCOUNTS: UserAccount[] = [
     solvedCount: 8,
     diagnosticCompleted: true,
     createdAt: '2026-11-01T10:00:00Z',
+    eloRating: 1420,
+    duelWins: 8,
+    duelLosses: 2,
+    bugsFixed: 11,
   },
   {
     id: 'acc_arjun',
@@ -130,6 +139,10 @@ export const INITIAL_DEMO_ACCOUNTS: UserAccount[] = [
     solvedCount: 12,
     diagnosticCompleted: true,
     createdAt: '2026-11-03T11:00:00Z',
+    eloRating: 1380,
+    duelWins: 6,
+    duelLosses: 3,
+    bugsFixed: 9,
   },
   {
     id: 'acc_riya',
@@ -146,6 +159,10 @@ export const INITIAL_DEMO_ACCOUNTS: UserAccount[] = [
     solvedCount: 6,
     diagnosticCompleted: false,
     createdAt: '2026-11-07T09:30:00Z',
+    eloRating: 1210,
+    duelWins: 2,
+    duelLosses: 4,
+    bugsFixed: 4,
   },
   {
     id: 'acc_dev',
@@ -162,6 +179,10 @@ export const INITIAL_DEMO_ACCOUNTS: UserAccount[] = [
     solvedCount: 28,
     diagnosticCompleted: true,
     createdAt: '2026-10-15T08:00:00Z',
+    eloRating: 1820,
+    duelWins: 24,
+    duelLosses: 3,
+    bugsFixed: 35,
   },
 ];
 
@@ -561,6 +582,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addXp(xpEarned);
   };
 
+  // 1v1 Arena Duel Outcome Handler
+  const recordDuelOutcome = (won: boolean, opponentElo: number) => {
+    const currentElo = currentAccount.eloRating || 1200;
+    const { playerChange, newElo } = calculateEloChange(currentElo, opponentElo, won);
+    const xpBonus = won ? 100 : 30;
+
+    setAccounts((prev) =>
+      prev.map((acc) => {
+        if (acc.id === currentAccountId) {
+          return {
+            ...acc,
+            eloRating: newElo,
+            duelWins: (acc.duelWins || 0) + (won ? 1 : 0),
+            duelLosses: (acc.duelLosses || 0) + (won ? 0 : 1),
+          };
+        }
+        return acc;
+      })
+    );
+    addXp(xpBonus);
+    return { playerChange, newElo };
+  };
+
+  // Bug Hunt Fixed Handler
+  const recordBugFixed = (challengeId: string, xpEarned: number) => {
+    setAccounts((prev) =>
+      prev.map((acc) => {
+        if (acc.id === currentAccountId) {
+          return {
+            ...acc,
+            bugsFixed: (acc.bugsFixed || 0) + 1,
+          };
+        }
+        return acc;
+      })
+    );
+    addXp(xpEarned);
+  };
+
   // Community Chat Handlers
   const sendChatMessage = (
     channelId: string,
@@ -920,6 +980,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         channelMessages,
         sendChatMessage,
         toggleReaction,
+        recordDuelOutcome,
+        recordBugFixed,
         diagnosticCompleted,
         completeDiagnostic,
         masteries,

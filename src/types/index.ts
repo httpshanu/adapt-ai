@@ -231,6 +231,11 @@ export interface UserAccount {
   solvedCount: number;
   diagnosticCompleted: boolean;
   createdAt: string;
+  // 1v1 Arena & Debugger Stats
+  eloRating?: number;
+  duelWins?: number;
+  duelLosses?: number;
+  bugsFixed?: number;
 }
 
 export interface LeaderboardEntry {
@@ -297,4 +302,56 @@ export interface ChatChannel {
   icon: string;
   category: 'community' | 'learning' | 'focus';
 }
+
+// ==================== 1v1 Code Duel & Spot the Bug ====================
+
+export interface DuelOpponent {
+  id: string;
+  name: string;
+  avatar: string;
+  elo: number;
+  league: LeagueTier;
+  title: string;
+  avatarEmoji: string;
+  speedMultiplier: number; // lower means faster bot
+}
+
+export interface DuelProblem {
+  id: string;
+  title: string;
+  topic: TopicSlug;
+  difficulty: DifficultyLevel;
+  descriptionMarkdown: string;
+  starterCodes: {
+    python: string;
+    cpp: string;
+    java: string;
+  };
+  testCases: TestCase[];
+  timeLimitMinutes: number;
+}
+
+export interface BugHuntChallenge {
+  id: string;
+  title: string;
+  topic: string;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  description: string;
+  language: 'python' | 'cpp' | 'java';
+  buggyCode: string;
+  fixedCode: string;
+  bugExplanation: string;
+  hint: string;
+  testCases: TestCase[];
+  timeLimitSeconds: number;
+  xpReward: number;
+}
+
+export interface BugHuntResult {
+  challengeId: string;
+  solved: boolean;
+  timeTakenSeconds: number;
+  xpEarned: number;
+}
+
 

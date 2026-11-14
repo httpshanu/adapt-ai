@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { 
   ArrowRight, 
+  Bug,
   CheckCircle2, 
   Clock, 
   Code2, 
@@ -18,6 +19,7 @@ import {
   RotateCw, 
   ShieldCheck, 
   Sparkles, 
+  Swords,
   Target, 
   Trophy, 
   Users, 
@@ -172,13 +174,69 @@ export default function MasteryDashboardPage() {
         </div>
 
         {/* =========================================================================
-            3 HIGH-ENGAGEMENT ACTION CARDS (Quiz, Leaderboard, Lounge)
+            4 HIGH-ENGAGEMENT ACTION CARDS (Duel, Bug Hunter, Quiz, Lounge)
         ========================================================================= */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-          {/* Card 1: Daily Blitz */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Card 1: 1v1 Code Duel */}
+          <Link
+            href="/duel"
+            className="group bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-white p-5 rounded-3xl border border-rose-200/80 shadow-xs hover:shadow-md hover:border-rose-400 transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="h-10 w-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-xl shadow-sm">
+                  ⚔️
+                </div>
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                  {currentAccount.eloRating || 1200} Elo
+                </span>
+              </div>
+              <h3 className="font-bold text-slate-900 text-base group-hover:text-rose-600 transition-colors">
+                1v1 Code Duel
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Live PvP speed battles. Race against peers to pass test cases first!
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-rose-100 flex items-center justify-between text-xs font-bold text-rose-700">
+              <span>Enter Arena</span>
+              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {/* Card 2: Spot the Bug */}
+          <Link
+            href="/debugger"
+            className="group bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-white p-5 rounded-3xl border border-emerald-200/80 shadow-xs hover:shadow-md hover:border-emerald-400 transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="h-10 w-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl shadow-sm">
+                  🐛
+                </div>
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  60s Rush
+                </span>
+              </div>
+              <h3 className="font-bold text-slate-900 text-base group-hover:text-emerald-600 transition-colors">
+                Spot the Bug
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                60-second debugger blitz. Fix hidden pointer and recursion bugs for quick XP.
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-emerald-100 flex items-center justify-between text-xs font-bold text-emerald-700">
+              <span>Hunt Bugs</span>
+              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {/* Card 3: Daily Blitz */}
           <Link
             href="/daily-quiz"
-            className="group bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white p-6 rounded-3xl border border-amber-200/80 shadow-xs hover:shadow-md hover:border-amber-400 transition-all flex flex-col justify-between"
+            className="group bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white p-5 rounded-3xl border border-amber-200/80 shadow-xs hover:shadow-md hover:border-amber-400 transition-all flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -186,55 +244,27 @@ export default function MasteryDashboardPage() {
                   🔥
                 </div>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                  {dailyQuizResult ? 'Completed Today' : '+110 XP Available'}
+                  {dailyQuizResult ? 'Done' : '+110 XP'}
                 </span>
               </div>
               <h3 className="font-bold text-slate-900 text-base group-hover:text-amber-600 transition-colors">
                 Daily DSA Blitz
               </h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                3 quick algorithmic MCQs. Keep your streak burning and claim daily bonus points.
+                3 quick algorithmic MCQs. Keep your streak alive and earn bonus points.
               </p>
             </div>
 
             <div className="mt-4 pt-3 border-t border-amber-100 flex items-center justify-between text-xs font-bold text-amber-700">
-              <span>{dailyQuizResult ? 'Review Today\'s Quiz' : 'Start Blitz (2 mins)'}</span>
+              <span>{dailyQuizResult ? 'Review' : 'Start Blitz'}</span>
               <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
             </div>
           </Link>
 
-          {/* Card 2: Leaderboard Arena */}
-          <Link
-            href="/leaderboard"
-            className="group bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-white p-6 rounded-3xl border border-indigo-200/80 shadow-xs hover:shadow-md hover:border-indigo-400 transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-sm">
-                  🏆
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-                  Global Arena
-                </span>
-              </div>
-              <h3 className="font-bold text-slate-900 text-base group-hover:text-indigo-600 transition-colors">
-                Arena Leaderboard
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                You are currently ranked <span className="font-bold text-indigo-600">#{myRankEntry.rank}</span>. Climb into the Top 3 to earn the Grandmaster Crown!
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-indigo-100 flex items-center justify-between text-xs font-bold text-indigo-700">
-              <span>View Top Standings</span>
-              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </Link>
-
-          {/* Card 3: Discord Code Lounge */}
+          {/* Card 4: Discord Code Lounge */}
           <Link
             href="/lounge"
-            className="group bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-3xl border border-slate-700 text-white shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+            className="group bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-3xl border border-slate-700 text-white shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -247,10 +277,10 @@ export default function MasteryDashboardPage() {
                 </span>
               </div>
               <h3 className="font-bold text-white text-base group-hover:text-indigo-300 transition-colors">
-                Code Lounge (Community)
+                Code Lounge
               </h3>
               <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                Discord-style channels. Ask <span className="text-indigo-400 font-bold">@CodeAdaptBot</span> for algorithm hints, flex solutions, and study in lo-fi rooms.
+                Discord channels with @CodeAdaptBot doubt solver and Lo-Fi study timer.
               </p>
             </div>
 
