@@ -93,6 +93,9 @@ export default function MasteryDashboardPage() {
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${tier.badgeColor}`}>
                 {tier.icon} {currentAccount.league} League
               </span>
+              <span className="font-mono text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-md">
+                UID: #{currentAccount.uid}
+              </span>
               <span className="text-xs text-slate-400 font-medium">
                 Level {levelInfo.level} • {levelInfo.title}
               </span>

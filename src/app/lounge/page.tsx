@@ -165,8 +165,13 @@ export default function LoungePage() {
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-200 truncate max-w-[90px]">
-                    {currentAccount.name.split(' ')[0]}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-slate-200 truncate max-w-[80px]">
+                      {currentAccount.name.split(' ')[0]}
+                    </span>
+                    <span className="font-mono text-[9px] font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-1 py-0.2 rounded">
+                      #{currentAccount.uid}
+                    </span>
                   </div>
                   <div className="text-[10px] text-slate-500">{currentAccount.league}</div>
                 </div>

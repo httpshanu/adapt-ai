@@ -217,7 +217,12 @@ export default function DuelPage() {
               ⚔️
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-bold block">Your Arena Elo</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">Your Arena Elo</span>
+                <span className="font-mono text-[10px] font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.2 rounded">
+                  #{currentAccount.uid}
+                </span>
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-black text-white">{playerElo} Elo</span>
                 <span className="text-xs font-semibold text-emerald-400">
@@ -272,9 +277,16 @@ export default function DuelPage() {
                             </span>
                           </div>
 
-                          <h3 className="font-bold text-white text-base group-hover:text-indigo-400 transition-colors">
-                            {opp.name}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-white text-base group-hover:text-indigo-400 transition-colors">
+                              {opp.name}
+                            </h3>
+                            {opp.uid && (
+                              <span className="font-mono text-[10px] font-bold text-slate-400 bg-slate-900 border border-slate-800 px-1.5 py-0.2 rounded">
+                                #{opp.uid}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-xs text-slate-400 font-medium block mt-0.5">
                             {opp.title}
                           </span>
@@ -364,7 +376,14 @@ export default function DuelPage() {
                     <div className="flex items-center gap-2.5">
                       <span className="text-xl">{selectedOpponent.avatarEmoji}</span>
                       <div>
-                        <span className="font-bold text-xs text-white block">{selectedOpponent.name}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-xs text-white block">{selectedOpponent.name}</span>
+                          {selectedOpponent.uid && (
+                            <span className="font-mono text-[9px] font-bold text-slate-400 bg-slate-800 px-1 py-0.2 rounded">
+                              #{selectedOpponent.uid}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[10px] text-slate-400">{selectedOpponent.elo} Elo</span>
                       </div>
                     </div>

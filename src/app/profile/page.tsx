@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Award, Flame, KeyRound, LogOut, Save, Trophy, UserCheck, Users, Zap } from 'lucide-react';
+import { Award, Check, Copy, Flame, Hash, KeyRound, LogOut, Save, Trophy, UserCheck, Users, Zap } from 'lucide-react';
 import AppSidebar from '../../components/AppSidebar';
 import { useApp } from '../../context/AppContext';
 import AccountSwitcherModal from '../../components/AccountSwitcherModal';
@@ -16,6 +16,15 @@ export default function ProfileSettingsPage() {
   const [careerGoal, setCareerGoal] = useState('Placement / Job');
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const [copiedUid, setCopiedUid] = useState(false);
+
+  const copyToClipboard = (uid: string) => {
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(uid);
+      setCopiedUid(true);
+      setTimeout(() => setCopiedUid(false), 2000);
+    }
+  };
 
   const tier = LEAGUE_TIER_CONFIG[currentAccount.league];
 
@@ -71,7 +80,23 @@ export default function ProfileSettingsPage() {
                     {tier.icon} {currentAccount.league}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">{currentAccount.email}</p>
+                <div className="flex items-center gap-2.5 mt-1">
+                  <p className="text-xs text-slate-400">{currentAccount.email}</p>
+                  <span className="text-slate-300 text-xs">•</span>
+                  {/* Player UID Tag */}
+                  <button
+                    onClick={() => copyToClipboard(currentAccount.uid)}
+                    title="Click to copy Player UID"
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 font-mono text-[11px] font-bold text-indigo-700 transition-colors"
+                  >
+                    <span>UID: #{currentAccount.uid}</span>
+                    {copiedUid ? (
+                      <Check className="h-3 w-3 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3 w-3 text-indigo-400" />
+                    )}
+                  </button>
+                </div>
                 <div className="flex items-center gap-3 mt-2 text-xs font-semibold text-slate-600">
                   <span>Level {levelInfo.level} ({levelInfo.title})</span>
                   <span>•</span>

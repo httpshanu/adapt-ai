@@ -131,6 +131,9 @@ export default function Navbar() {
                   <span className="text-xs font-bold text-slate-800 leading-tight">
                     {currentAccount.name.split(' ')[0]}
                   </span>
+                  <span className="font-mono text-[9px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1 py-0.2 rounded">
+                    #{currentAccount.uid}
+                  </span>
                   <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold border ${tier.badgeColor}`}>
                     {tier.icon}
                   </span>

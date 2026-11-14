@@ -110,10 +110,24 @@ export function calculateSolveXp(
   return { base, multiplier, total };
 }
 
+export function generatePlayerUid(seed?: string): string {
+  if (seed) {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash << 5) - hash + seed.charCodeAt(i);
+      hash |= 0;
+    }
+    const num = Math.abs(hash % 9000) + 1000;
+    return `CA-${num}`;
+  }
+  return `CA-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
 // Active Simulated Peer Learners on the Platform
 export const MOCK_COMMUNITY_PEERS: Omit<LeaderboardEntry, 'rank'>[] = [
   {
     userId: 'peer_1',
+    uid: 'CA-4096',
     name: 'Dev Khurana',
     avatar: 'dev_pro',
     league: 'Diamond',
@@ -126,6 +140,7 @@ export const MOCK_COMMUNITY_PEERS: Omit<LeaderboardEntry, 'rank'>[] = [
   },
   {
     userId: 'peer_2',
+    uid: 'CA-5120',
     name: 'Aarav Sharma',
     avatar: 'aarav',
     league: 'Diamond',
@@ -137,6 +152,7 @@ export const MOCK_COMMUNITY_PEERS: Omit<LeaderboardEntry, 'rank'>[] = [
   },
   {
     userId: 'peer_3',
+    uid: 'CA-6310',
     name: 'Ananya Roy',
     avatar: 'ananya',
     league: 'Gold',
@@ -149,6 +165,7 @@ export const MOCK_COMMUNITY_PEERS: Omit<LeaderboardEntry, 'rank'>[] = [
   },
   {
     userId: 'peer_4',
+    uid: 'CA-7042',
     name: 'Rohan Mehta',
     avatar: 'rohan',
     league: 'Gold',
@@ -161,6 +178,7 @@ export const MOCK_COMMUNITY_PEERS: Omit<LeaderboardEntry, 'rank'>[] = [
   },
   {
     userId: 'peer_5',
+    uid: 'CA-3109',
     name: 'Priya Patel',
     avatar: 'priya',
     league: 'Silver',
@@ -173,6 +191,7 @@ export const MOCK_COMMUNITY_PEERS: Omit<LeaderboardEntry, 'rank'>[] = [
   },
   {
     userId: 'peer_6',
+    uid: 'CA-8294',
     name: 'Kabir Verma',
     avatar: 'kabir',
     league: 'Silver',
@@ -184,6 +203,7 @@ export const MOCK_COMMUNITY_PEERS: Omit<LeaderboardEntry, 'rank'>[] = [
   },
   {
     userId: 'peer_7',
+    uid: 'CA-9103',
     name: 'Ishaan Joshi',
     avatar: 'ishaan',
     league: 'Bronze',
@@ -195,6 +215,7 @@ export const MOCK_COMMUNITY_PEERS: Omit<LeaderboardEntry, 'rank'>[] = [
   },
   {
     userId: 'peer_8',
+    uid: 'CA-1158',
     name: 'Sneha Rao',
     avatar: 'sneha',
     league: 'Bronze',
@@ -212,6 +233,7 @@ export function buildLeaderboard(
 ): LeaderboardEntry[] {
   const currentEntry: Omit<LeaderboardEntry, 'rank'> = {
     userId: currentUser.id,
+    uid: currentUser.uid || generatePlayerUid(currentUser.id),
     name: currentUser.name,
     avatar: currentUser.avatar,
     league: currentUser.league,

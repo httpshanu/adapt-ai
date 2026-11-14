@@ -32,6 +32,7 @@ import {
   buildLeaderboard, 
   calculateLevel, 
   calculateSolveXp, 
+  generatePlayerUid,
   getLeagueTier 
 } from '../lib/gamificationEngine';
 import { 
@@ -106,6 +107,7 @@ export interface AppContextType {
 export const INITIAL_DEMO_ACCOUNTS: UserAccount[] = [
   {
     id: 'acc_sanidhya',
+    uid: 'CA-1001',
     name: 'Sanidhya Uniyal',
     email: 'sanidhya@codeadapt.ai',
     avatar: 'sanidhya',
@@ -126,6 +128,7 @@ export const INITIAL_DEMO_ACCOUNTS: UserAccount[] = [
   },
   {
     id: 'acc_arjun',
+    uid: 'CA-2048',
     name: 'Arjun Sharma',
     email: 'arjun.prep@codeadapt.ai',
     avatar: 'aarav',
@@ -146,6 +149,7 @@ export const INITIAL_DEMO_ACCOUNTS: UserAccount[] = [
   },
   {
     id: 'acc_riya',
+    uid: 'CA-3109',
     name: 'Riya Patel',
     email: 'riya.learns@codeadapt.ai',
     avatar: 'priya',
@@ -166,6 +170,7 @@ export const INITIAL_DEMO_ACCOUNTS: UserAccount[] = [
   },
   {
     id: 'acc_dev',
+    uid: 'CA-4096',
     name: 'Dev Khurana',
     email: 'dev.lead@codeadapt.ai',
     avatar: 'dev_pro',
@@ -422,7 +427,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (savedAccounts) {
         const parsedAccs = JSON.parse(savedAccounts);
         if (Array.isArray(parsedAccs) && parsedAccs.length > 0) {
-          setAccounts(parsedAccs);
+          const normalized = parsedAccs.map((acc: UserAccount) => ({
+            ...acc,
+            uid: acc.uid || generatePlayerUid(acc.id),
+          }));
+          setAccounts(normalized);
         }
       }
 
@@ -499,6 +508,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newId = `acc_${Date.now()}`;
     const newAccount: UserAccount = {
       id: newId,
+      uid: generatePlayerUid(),
       name: name.trim() || 'New Learner',
       email: email.trim() || `${newId}@codeadapt.ai`,
       avatar: avatar || 'sanidhya',

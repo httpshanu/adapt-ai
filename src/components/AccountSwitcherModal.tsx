@@ -99,6 +99,9 @@ export default function AccountSwitcherModal({ isOpen, onClose }: AccountSwitche
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-sm text-slate-900">{acc.name}</span>
+                            <span className="font-mono text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.2 rounded">
+                              #{acc.uid}
+                            </span>
                             {isCurrent && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white">
                                 Active

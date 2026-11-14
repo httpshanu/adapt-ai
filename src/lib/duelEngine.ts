@@ -3,6 +3,7 @@ import { DuelOpponent, DuelProblem } from '../types';
 export const DUEL_OPPONENTS: DuelOpponent[] = [
   {
     id: 'bot_dev',
+    uid: 'CA-4096',
     name: 'Dev Khurana',
     avatar: 'dev_pro',
     elo: 1820,
@@ -13,6 +14,7 @@ export const DUEL_OPPONENTS: DuelOpponent[] = [
   },
   {
     id: 'bot_aarav',
+    uid: 'CA-5120',
     name: 'Aarav Sharma',
     avatar: 'aarav',
     elo: 1540,
@@ -23,6 +25,7 @@ export const DUEL_OPPONENTS: DuelOpponent[] = [
   },
   {
     id: 'bot_ananya',
+    uid: 'CA-6310',
     name: 'Ananya Roy',
     avatar: 'ananya',
     elo: 1410,
@@ -33,6 +36,7 @@ export const DUEL_OPPONENTS: DuelOpponent[] = [
   },
   {
     id: 'bot_priya',
+    uid: 'CA-3109',
     name: 'Priya Patel',
     avatar: 'priya',
     elo: 1280,
@@ -43,6 +47,7 @@ export const DUEL_OPPONENTS: DuelOpponent[] = [
   },
   {
     id: 'bot_kabir',
+    uid: 'CA-8294',
     name: 'Kabir Verma',
     avatar: 'kabir',
     elo: 1190,

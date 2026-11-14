@@ -218,6 +218,7 @@ export type LeagueTier = 'Bronze' | 'Silver' | 'Gold' | 'Diamond' | 'Grandmaster
 
 export interface UserAccount {
   id: string;
+  uid: string; // Unique Player Tag / UID, e.g. "CA-1001"
   name: string;
   email: string;
   avatar: string; // avatar identifier or url
@@ -241,6 +242,7 @@ export interface UserAccount {
 export interface LeaderboardEntry {
   rank: number;
   userId: string;
+  uid: string; // Unique Player Tag / UID, e.g. "CA-1001"
   name: string;
   avatar: string;
   league: LeagueTier;
@@ -307,6 +309,7 @@ export interface ChatChannel {
 
 export interface DuelOpponent {
   id: string;
+  uid?: string;
   name: string;
   avatar: string;
   elo: number;
