@@ -15,6 +15,10 @@
 **CodeAdapt AI** is an intelligent coding platform engineered to eliminate one-size-fits-all coding education. By tracking student micro-behaviors, syntax mistakes, execution speed, and pass/fail distributions, CodeAdapt dynamically calculates continuous rolling exponential mastery scores and serves targeted problem variations.
 
 ### Key Capabilities:
+- 👥 **Multi-Account Profile Switcher**: Switch instantly between preloaded demo student profiles (Arjun, Riya, Dev, Sanidhya) or create custom student accounts with isolated progress data.
+- 🏆 **Arena Leaderboard & XP Leagues**: Dynamic tiered competition (Bronze 🥉, Silver 🥈, Gold 🥇, Diamond 💎, Grandmaster 👑) with an animated Top-3 podium and weekly sprints.
+- 🔥 **Daily DSA Blitz Quizzes**: 3 daily algorithmic MCQs with countdown timers, instant explanations, confetti celebrations, and streak preservation.
+- 💬 **Discord-Style Code Lounge**: Community chat with channels (`#general-chat`, `#doubt-solver`, `#daily-quiz-chat`, `#code-flex`, `🎧 lo-fi-focus-room`), syntax-highlighted code sharing, emoji reactions, and interactive `@CodeAdaptBot` AI hint assistant.
 - 🎯 **Adaptive Diagnostic Baseline**: Dynamically evaluates initial learner competencies across algorithmic and data structure domains.
 - 💻 **In-Browser Monaco Code Editor**: Feature-packed coding experience with syntax highlighting, auto-completion, and multi-language support (Python, C++, Java).
 - ⚡ **Isolated Code Execution**: Robust sandboxed code execution powered by the **Piston Engine** with automatic zero-downtime compiler failover.
@@ -97,3 +101,4 @@ See [PISTON_SETUP.md](PISTON_SETUP.md) for full instructions.
 **Copyright (c) 2026 [Sanidhya Uniyal (httpshanu)](https://github.com/httpshanu)**
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for complete terms and details.
+

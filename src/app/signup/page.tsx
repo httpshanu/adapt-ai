@@ -8,7 +8,7 @@ import { useApp } from '../../context/AppContext';
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { setUserName } = useApp();
+  const { createAccount } = useApp();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,7 +17,9 @@ export default function SignUpPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) setUserName(name.trim());
+    if (name.trim()) {
+      createAccount(name.trim(), email.trim(), 'sanidhya', 'student');
+    }
     router.push('/onboarding');
   };
 

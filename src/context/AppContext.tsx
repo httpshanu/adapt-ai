@@ -7,7 +7,10 @@ import { QuestionBankRepository } from '../lib/questionBankRepository';
 import { selectAdaptiveProblem } from '../lib/questionSelector';
 import { 
   ActivityDay,
+  ChatMessage,
+  DailyQuizResult,
   ExecutionJobResult,
+  LeaderboardEntry,
   Problem, 
   QuestionBankInventory, 
   Recommendation, 
@@ -15,6 +18,7 @@ import {
   Submission, 
   TopicMastery, 
   TopicSlug, 
+  UserAccount, 
   VerdictStatus 
 } from '../types';
 import { 
@@ -24,10 +28,44 @@ import {
   isRevisionDue, 
   recordProblemRevision 
 } from '../lib/spacedRepetition';
+import { 
+  buildLeaderboard, 
+  calculateLevel, 
+  calculateSolveXp, 
+  getLeagueTier 
+} from '../lib/gamificationEngine';
+import { 
+  INITIAL_CHANNEL_MESSAGES, 
+  generateBotResponse 
+} from '../lib/communityData';
+import { getTodayDateKey } from '../lib/dailyQuizData';
 
-interface AppContextType {
+export interface AppContextType {
+  // Account Management
+  accounts: UserAccount[];
+  currentAccount: UserAccount;
+  switchAccount: (accountId: string) => void;
+  createAccount: (name: string, email: string, avatar: string, role?: 'student' | 'competitive' | 'mentor') => void;
+  deleteAccount: (accountId: string) => void;
   userName: string;
   setUserName: (name: string) => void;
+
+  // Gamification & Progression
+  xp: number;
+  addXp: (amount: number) => void;
+  levelInfo: ReturnType<typeof calculateLevel>;
+  leaderboard: LeaderboardEntry[];
+
+  // Daily Quiz
+  dailyQuizResult: DailyQuizResult | null;
+  completeDailyQuiz: (score: number, total: number, xpEarned: number) => void;
+
+  // Community Lounge
+  channelMessages: Record<string, ChatMessage[]>;
+  sendChatMessage: (channelId: string, content: string, codeSnippet?: { language: string; code: string }) => void;
+  toggleReaction: (channelId: string, messageId: string, emoji: string) => void;
+
+  // Core Learning Engine
   diagnosticCompleted: boolean;
   completeDiagnostic: (baselines: Record<TopicSlug, number>) => void;
   masteries: Record<TopicSlug, TopicMastery>;
@@ -59,6 +97,73 @@ interface AppContextType {
   refreshRecommendation: () => Promise<void>;
   resetAllData: () => void;
 }
+
+export const INITIAL_DEMO_ACCOUNTS: UserAccount[] = [
+  {
+    id: 'acc_sanidhya',
+    name: 'Sanidhya Uniyal',
+    email: 'sanidhya@codeadapt.ai',
+    avatar: 'sanidhya',
+    role: 'competitive',
+    level: 5,
+    xp: 920,
+    streak: 3,
+    longestStreak: 7,
+    league: 'Gold',
+    badges: ['Array Master', 'Quiz Blitz', 'Night Owl'],
+    solvedCount: 8,
+    diagnosticCompleted: true,
+    createdAt: '2026-11-01T10:00:00Z',
+  },
+  {
+    id: 'acc_arjun',
+    name: 'Arjun Sharma',
+    email: 'arjun.prep@codeadapt.ai',
+    avatar: 'aarav',
+    role: 'student',
+    level: 4,
+    xp: 850,
+    streak: 4,
+    longestStreak: 6,
+    league: 'Gold',
+    badges: ['Consistent', 'Fast Learner'],
+    solvedCount: 12,
+    diagnosticCompleted: true,
+    createdAt: '2026-11-03T11:00:00Z',
+  },
+  {
+    id: 'acc_riya',
+    name: 'Riya Patel',
+    email: 'riya.learns@codeadapt.ai',
+    avatar: 'priya',
+    role: 'student',
+    level: 2,
+    xp: 420,
+    streak: 2,
+    longestStreak: 4,
+    league: 'Silver',
+    badges: ['First Blood', 'Rising Star'],
+    solvedCount: 6,
+    diagnosticCompleted: false,
+    createdAt: '2026-11-07T09:30:00Z',
+  },
+  {
+    id: 'acc_dev',
+    name: 'Dev Khurana',
+    email: 'dev.lead@codeadapt.ai',
+    avatar: 'dev_pro',
+    role: 'competitive',
+    level: 8,
+    xp: 1850,
+    streak: 14,
+    longestStreak: 21,
+    league: 'Diamond',
+    badges: ['Code Ninja', 'Speed Demon', 'Algorithm Ace'],
+    solvedCount: 28,
+    diagnosticCompleted: true,
+    createdAt: '2026-10-15T08:00:00Z',
+  },
+];
 
 const DEFAULT_MASTERIES: Record<TopicSlug, TopicMastery> = {
   arrays: {
@@ -185,7 +290,11 @@ const DEFAULT_INITIAL_RECOMMENDATION: Recommendation = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [userName, setUserName] = useState<string>('Sanidhya');
+  // Accounts State
+  const [accounts, setAccounts] = useState<UserAccount[]>(INITIAL_DEMO_ACCOUNTS);
+  const [currentAccountId, setCurrentAccountId] = useState<string>('acc_sanidhya');
+
+  // Active User Core State
   const [diagnosticCompleted, setDiagnosticCompleted] = useState<boolean>(true);
   const [masteries, setMasteries] = useState<Record<TopicSlug, TopicMastery>>(DEFAULT_MASTERIES);
   const [solvedProblemIds, setSolvedProblemIds] = useState<string[]>(['p_max_element']);
@@ -224,39 +333,106 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
   ]);
 
-  // Load from localStorage on mount
+  // Gamification & Quiz State
+  const [dailyQuizResult, setDailyQuizResult] = useState<DailyQuizResult | null>(null);
+  const [channelMessages, setChannelMessages] = useState<Record<string, ChatMessage[]>>(INITIAL_CHANNEL_MESSAGES);
+
+  // Current active account object
+  const currentAccount = accounts.find((a) => a.id === currentAccountId) || accounts[0];
+
+  // Helper to load specific account data from storage
+  const loadAccountData = (accId: string) => {
+    try {
+      const savedAccData = localStorage.getItem(`codeadapt_user_${accId}_data`);
+      if (savedAccData) {
+        const parsed = JSON.parse(savedAccData);
+        if (parsed.masteries) setMasteries({ ...DEFAULT_MASTERIES, ...parsed.masteries });
+        if (Array.isArray(parsed.solvedProblemIds)) setSolvedProblemIds(parsed.solvedProblemIds);
+        if (typeof parsed.diagnosticCompleted === 'boolean') setDiagnosticCompleted(parsed.diagnosticCompleted);
+        if (parsed.revisions) setRevisions(parsed.revisions);
+        if (Array.isArray(parsed.submissions)) setSubmissions(parsed.submissions);
+      } else {
+        // First time loading this account
+        if (accId === 'acc_riya') {
+          setDiagnosticCompleted(false);
+          setSolvedProblemIds([]);
+          setSubmissions([]);
+        } else if (accId === 'acc_dev') {
+          setDiagnosticCompleted(true);
+          setSolvedProblemIds(['p_max_element', 'p_valid_palindrome', 'p_two_sum', 'p_binary_search']);
+        }
+      }
+
+      // Load today's quiz result if saved
+      const todayKey = getTodayDateKey();
+      const savedQuiz = localStorage.getItem(`codeadapt_user_${accId}_quiz_${todayKey}`);
+      if (savedQuiz) {
+        setDailyQuizResult(JSON.parse(savedQuiz));
+      } else {
+        setDailyQuizResult(null);
+      }
+    } catch {
+      // Graceful error recovery
+    }
+  };
+
+  // Helper to persist current active account data
+  const persistCurrentAccountData = (accId: string) => {
+    try {
+      const dataToSave = {
+        masteries,
+        solvedProblemIds,
+        diagnosticCompleted,
+        revisions,
+        submissions,
+      };
+      localStorage.setItem(`codeadapt_user_${accId}_data`, JSON.stringify(dataToSave));
+    } catch {
+      // ignore
+    }
+  };
+
+  // Initial Load on Mount
   useEffect(() => {
     QuestionBankRepository.initializeFromStorage();
 
     try {
-      const savedMasteries = localStorage.getItem('codeadapt_masteries');
-      if (savedMasteries) {
-        const parsed = JSON.parse(savedMasteries);
-        setMasteries({ ...DEFAULT_MASTERIES, ...parsed });
+      const savedAccounts = localStorage.getItem('codeadapt_all_accounts');
+      if (savedAccounts) {
+        const parsedAccs = JSON.parse(savedAccounts);
+        if (Array.isArray(parsedAccs) && parsedAccs.length > 0) {
+          setAccounts(parsedAccs);
+        }
       }
-      const savedSolved = localStorage.getItem('codeadapt_solved');
-      if (savedSolved) {
-        const parsedSolved = JSON.parse(savedSolved);
-        if (Array.isArray(parsedSolved)) setSolvedProblemIds(parsedSolved);
-      }
-      const savedDiag = localStorage.getItem('codeadapt_diag_completed');
-      if (savedDiag !== null) setDiagnosticCompleted(Boolean(JSON.parse(savedDiag)));
-      const savedName = localStorage.getItem('codeadapt_username');
-      if (savedName && typeof savedName === 'string') setUserName(savedName);
-      const savedRevisions = localStorage.getItem('codeadapt_revisions');
-      if (savedRevisions) {
-        const parsedRev = JSON.parse(savedRevisions);
-        if (typeof parsedRev === 'object' && parsedRev !== null) setRevisions(parsedRev);
-      }
-      const savedSubmissions = localStorage.getItem('codeadapt_submissions');
-      if (savedSubmissions) {
-        const parsedSubs = JSON.parse(savedSubmissions);
-        if (Array.isArray(parsedSubs)) setSubmissions(parsedSubs);
+
+      const activeId = localStorage.getItem('codeadapt_active_account_id') || 'acc_sanidhya';
+      setCurrentAccountId(activeId);
+      loadAccountData(activeId);
+
+      const savedChat = localStorage.getItem('codeadapt_chat_messages');
+      if (savedChat) {
+        setChannelMessages(JSON.parse(savedChat));
       }
     } catch {
-      // ignore corrupted data gracefully
+      // ignore
     }
   }, []);
+
+  // Save accounts when accounts list or active account changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('codeadapt_all_accounts', JSON.stringify(accounts));
+      localStorage.setItem('codeadapt_active_account_id', currentAccountId);
+    } catch {
+      // ignore
+    }
+  }, [accounts, currentAccountId]);
+
+  // Save current account learning data whenever it updates
+  useEffect(() => {
+    persistCurrentAccountData(currentAccountId);
+    setInventory(QuestionBankRepository.getInventory(solvedProblemIds, revisionDueIds));
+  }, [masteries, solvedProblemIds, revisionDueIds, revisions, submissions, diagnosticCompleted, currentAccountId]);
 
   // Compute revision due IDs
   useEffect(() => {
@@ -266,37 +442,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setRevisionDueIds(due);
   }, [revisions]);
 
-  // Update inventory and sync state
-  useEffect(() => {
-    try {
-      localStorage.setItem('codeadapt_masteries', JSON.stringify(masteries));
-      localStorage.setItem('codeadapt_solved', JSON.stringify(solvedProblemIds));
-      localStorage.setItem('codeadapt_diag_completed', JSON.stringify(diagnosticCompleted));
-      localStorage.setItem('codeadapt_username', userName);
-      localStorage.setItem('codeadapt_revisions', JSON.stringify(revisions));
-      localStorage.setItem('codeadapt_submissions', JSON.stringify(submissions));
-    } catch {
-      // ignore
-    }
-
-    setInventory(QuestionBankRepository.getInventory(solvedProblemIds, revisionDueIds));
-  }, [masteries, solvedProblemIds, revisionDueIds, revisions, submissions, userName, diagnosticCompleted]);
-
-  // Streak calculation and Heatmap days
-  const streakInfo = calculateUserStreak(submissions.map((s) => s.createdAt));
-  const activityDays = buildActivityHeatmap(submissions);
-  const revisionItems = Object.values(revisions).map((r) => ({
-    ...r,
-    isDue: isRevisionDue(r.nextDueAt),
-  }));
-
-  // Initial and reactive recommendation calculation
+  // Reactive recommendation calculation
   const updateRecommendation = async (
     currentMasteries = masteries,
     currentSolved = solvedProblemIds
   ) => {
     const rec = await selectAdaptiveProblem({
-      userId: userName,
+      userId: currentAccount.name,
       masteries: currentMasteries,
       solvedProblemIds: currentSolved,
       revisionDueProblemIds: revisionDueIds,
@@ -308,6 +460,212 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     updateRecommendation();
   }, [masteries, solvedProblemIds]);
+
+  // Switch Account Handler
+  const switchAccount = (accountId: string) => {
+    persistCurrentAccountData(currentAccountId);
+    setCurrentAccountId(accountId);
+    loadAccountData(accountId);
+  };
+
+  // Create New Account Handler
+  const createAccount = (
+    name: string,
+    email: string,
+    avatar: string,
+    role: 'student' | 'competitive' | 'mentor' = 'student'
+  ) => {
+    const newId = `acc_${Date.now()}`;
+    const newAccount: UserAccount = {
+      id: newId,
+      name: name.trim() || 'New Learner',
+      email: email.trim() || `${newId}@codeadapt.ai`,
+      avatar: avatar || 'sanidhya',
+      role,
+      level: 1,
+      xp: 0,
+      streak: 1,
+      longestStreak: 1,
+      league: 'Bronze',
+      badges: ['First Blood'],
+      solvedCount: 0,
+      diagnosticCompleted: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updated = [...accounts, newAccount];
+    setAccounts(updated);
+    switchAccount(newId);
+  };
+
+  // Delete Account Handler
+  const deleteAccount = (accountId: string) => {
+    if (accounts.length <= 1) return;
+    const filtered = accounts.filter((a) => a.id !== accountId);
+    setAccounts(filtered);
+    if (currentAccountId === accountId) {
+      switchAccount(filtered[0].id);
+    }
+  };
+
+  // User Name Adapter for Backward Compatibility
+  const userName = currentAccount.name;
+  const setUserName = (name: string) => {
+    setAccounts((prev) =>
+      prev.map((acc) => (acc.id === currentAccountId ? { ...acc, name } : acc))
+    );
+  };
+
+  // Gamification: XP & Level Info
+  const xp = currentAccount.xp;
+  const levelInfo = calculateLevel(xp);
+  const leaderboard = buildLeaderboard(currentAccount);
+
+  const addXp = (amount: number) => {
+    setAccounts((prev) =>
+      prev.map((acc) => {
+        if (acc.id === currentAccountId) {
+          const newXp = acc.xp + amount;
+          const newTier = getLeagueTier(newXp);
+          const newLevel = calculateLevel(newXp).level;
+          return {
+            ...acc,
+            xp: newXp,
+            league: newTier,
+            level: newLevel,
+          };
+        }
+        return acc;
+      })
+    );
+  };
+
+  // Daily Quiz Handler
+  const completeDailyQuiz = (score: number, total: number, xpEarned: number) => {
+    const result: DailyQuizResult = {
+      date: getTodayDateKey(),
+      score,
+      total,
+      xpEarned,
+      completedAt: new Date().toISOString(),
+    };
+    setDailyQuizResult(result);
+    try {
+      localStorage.setItem(
+        `codeadapt_user_${currentAccountId}_quiz_${getTodayDateKey()}`,
+        JSON.stringify(result)
+      );
+    } catch {
+      // ignore
+    }
+    addXp(xpEarned);
+  };
+
+  // Community Chat Handlers
+  const sendChatMessage = (
+    channelId: string,
+    content: string,
+    codeSnippet?: { language: string; code: string }
+  ) => {
+    const newMsg: ChatMessage = {
+      id: `msg_${Date.now()}`,
+      channelId,
+      author: {
+        id: currentAccount.id,
+        name: currentAccount.name,
+        avatar: currentAccount.avatar,
+        badge: `${currentAccount.league} ${currentAccount.league === 'Grandmaster' ? '👑' : currentAccount.league === 'Diamond' ? '💎' : '🥇'}`,
+        role: currentAccount.role,
+      },
+      content,
+      codeSnippet,
+      reactions: {},
+      timestamp: 'Just now',
+    };
+
+    setChannelMessages((prev) => {
+      const channelList = prev[channelId] || [];
+      const updated = {
+        ...prev,
+        [channelId]: [...channelList, newMsg],
+      };
+      try {
+        localStorage.setItem('codeadapt_chat_messages', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+
+    // Check if user is asking CodeAdaptBot
+    if (content.toLowerCase().includes('@codeadaptbot') || channelId === 'doubt-help') {
+      setTimeout(() => {
+        const botReply = generateBotResponse(content);
+        const botMsg: ChatMessage = {
+          id: `msg_bot_${Date.now()}`,
+          channelId,
+          author: {
+            id: 'bot_ai',
+            name: 'CodeAdaptBot',
+            avatar: 'bot',
+            badge: 'AI Mentor 🤖',
+            isBot: true,
+          },
+          content: botReply,
+          reactions: { '💡': 1, '🔥': 1 },
+          timestamp: 'Just now',
+        };
+
+        setChannelMessages((prev) => {
+          const list = prev[channelId] || [];
+          const updated = {
+            ...prev,
+            [channelId]: [...list, botMsg],
+          };
+          try {
+            localStorage.setItem('codeadapt_chat_messages', JSON.stringify(updated));
+          } catch {
+            // ignore
+          }
+          return updated;
+        });
+      }, 900);
+    }
+  };
+
+  const toggleReaction = (channelId: string, messageId: string, emoji: string) => {
+    setChannelMessages((prev) => {
+      const list = prev[channelId] || [];
+      const updatedList = list.map((msg) => {
+        if (msg.id === messageId) {
+          const currentCount = msg.reactions[emoji] || 0;
+          return {
+            ...msg,
+            reactions: {
+              ...msg.reactions,
+              [emoji]: currentCount + 1,
+            },
+          };
+        }
+        return msg;
+      });
+      const updated = { ...prev, [channelId]: updatedList };
+      try {
+        localStorage.setItem('codeadapt_chat_messages', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+  };
+
+  // Learning Engine Submissions & Diagnostics
+  const streakInfo = calculateUserStreak(submissions.map((s) => s.createdAt));
+  const activityDays = buildActivityHeatmap(submissions);
+  const revisionItems = Object.values(revisions).map((r) => ({
+    ...r,
+    isDue: isRevisionDue(r.nextDueAt),
+  }));
 
   const completeDiagnostic = (baselines: Record<TopicSlug, number>) => {
     const updated: Record<TopicSlug, TopicMastery> = { ...masteries };
@@ -324,6 +682,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
     setMasteries(updated);
     setDiagnosticCompleted(true);
+    addXp(150); // XP bonus for completing diagnostic baseline
     updateRecommendation(updated, solvedProblemIds);
   };
 
@@ -349,9 +708,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
 
     const isAccepted = verdict === 'ACCEPTED';
-    const updatedSolved = isAccepted && !solvedProblemIds.includes(problem.id)
+    const isFirstSolve = isAccepted && !solvedProblemIds.includes(problem.id);
+    const updatedSolved = isFirstSolve
       ? [...solvedProblemIds, problem.id]
       : solvedProblemIds;
+
+    // Gamification XP calculation
+    if (isAccepted) {
+      const { total } = calculateSolveXp(problem.difficulty, currentAccount.streak, isFirstSolve);
+      addXp(total);
+      if (isFirstSolve) {
+        setAccounts((prev) =>
+          prev.map((acc) =>
+            acc.id === currentAccountId ? { ...acc, solvedCount: acc.solvedCount + 1 } : acc
+          )
+        );
+      }
+    }
 
     const newTm: TopicMastery = {
       ...currentTm,
@@ -403,9 +776,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSolvedProblemIds(updatedSolved);
     setSubmissions([newSub, ...submissions]);
 
-    // Adaptive Question Selection (Tier 1 -> Tier 2 -> Tier 3 -> Tier 4)
+    // Adaptive Question Selection
     const nextRec = await selectAdaptiveProblem({
-      userId: userName,
+      userId: currentAccount.name,
       masteries: updatedMasteries,
       solvedProblemIds: updatedSolved,
       revisionDueProblemIds: revisionDueIds,
@@ -437,7 +810,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           problemId: problem.id,
           code,
           language,
-          userId: userName,
+          userId: currentAccount.name,
           timeSpentSeconds,
         }),
       });
@@ -511,6 +884,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...revisions,
         [problemId]: updated,
       });
+      addXp(30); // XP bonus for spaced revision
     }
   };
 
@@ -522,7 +896,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setMasteries(DEFAULT_MASTERIES);
     setSolvedProblemIds(['p_max_element']);
     setDiagnosticCompleted(false);
-    localStorage.clear();
+    localStorage.removeItem(`codeadapt_user_${currentAccountId}_data`);
     setInventory(QuestionBankRepository.getInventory(['p_max_element'], []));
     updateRecommendation(DEFAULT_MASTERIES, ['p_max_element']);
   };
@@ -530,8 +904,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider
       value={{
+        accounts,
+        currentAccount,
+        switchAccount,
+        createAccount,
+        deleteAccount,
         userName,
         setUserName,
+        xp,
+        addXp,
+        levelInfo,
+        leaderboard,
+        dailyQuizResult,
+        completeDailyQuiz,
+        channelMessages,
+        sendChatMessage,
+        toggleReaction,
         diagnosticCompleted,
         completeDiagnostic,
         masteries,

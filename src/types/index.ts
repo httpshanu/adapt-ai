@@ -211,3 +211,90 @@ export interface AIMessage {
   content: string;
   timestamp?: string;
 }
+
+// ==================== Gamification, Multi-Account & Community ====================
+
+export type LeagueTier = 'Bronze' | 'Silver' | 'Gold' | 'Diamond' | 'Grandmaster';
+
+export interface UserAccount {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string; // avatar identifier or url
+  role: 'student' | 'competitive' | 'mentor';
+  level: number;
+  xp: number;
+  streak: number;
+  longestStreak: number;
+  league: LeagueTier;
+  badges: string[];
+  solvedCount: number;
+  diagnosticCompleted: boolean;
+  createdAt: string;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  avatar: string;
+  league: LeagueTier;
+  xp: number;
+  solvedCount: number;
+  streak: number;
+  trend: 'up' | 'down' | 'same' | 'new';
+  trendValue?: number;
+  badge?: string;
+  isCurrentUser?: boolean;
+}
+
+export interface DailyQuizQuestion {
+  id: string;
+  date: string; // YYYY-MM-DD
+  question: string;
+  codeSnippet?: string;
+  language?: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  topic: string;
+  xpReward: number;
+}
+
+export interface DailyQuizResult {
+  date: string;
+  score: number;
+  total: number;
+  xpEarned: number;
+  completedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  channelId: string;
+  author: {
+    id: string;
+    name: string;
+    avatar: string;
+    badge?: string;
+    isBot?: boolean;
+    role?: string;
+  };
+  content: string;
+  codeSnippet?: {
+    language: string;
+    code: string;
+  };
+  reactions: Record<string, number>;
+  userReactions?: string[];
+  timestamp: string;
+}
+
+export interface ChatChannel {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: 'community' | 'learning' | 'focus';
+}
+

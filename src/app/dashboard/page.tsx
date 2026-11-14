@@ -12,22 +12,27 @@ import {
   Flame, 
   Hash, 
   Layers, 
+  MessageSquare, 
   Play, 
   RefreshCw, 
   RotateCw, 
   ShieldCheck, 
   Sparkles, 
   Target, 
-  Wand2 
+  Trophy, 
+  Users, 
+  Wand2, 
+  Zap 
 } from 'lucide-react';
 import AppSidebar from '../../components/AppSidebar';
 import { ActivityHeatmap } from '../../components/ActivityHeatmap';
 import { useApp } from '../../context/AppContext';
 import { TopicSlug } from '../../types';
+import { LEAGUE_TIER_CONFIG } from '../../lib/gamificationEngine';
 
 export default function MasteryDashboardPage() {
   const { 
-    userName, 
+    currentAccount,
     masteries, 
     currentRecommendation, 
     inventory, 
@@ -37,8 +42,14 @@ export default function MasteryDashboardPage() {
     activityDays,
     completeRevision,
     refreshRecommendation,
-    resetAllData 
+    xp,
+    levelInfo,
+    dailyQuizResult,
+    leaderboard
   } = useApp();
+
+  const tier = LEAGUE_TIER_CONFIG[currentAccount.league];
+  const myRankEntry = leaderboard.find((e) => e.isCurrentUser) || leaderboard[0];
 
   const topicConfig: Record<TopicSlug, { name: string; barColor: string; iconColor: string; defaultScore: number }> = {
     arrays: { name: 'Arrays', barColor: 'bg-amber-500', iconColor: 'bg-amber-500/10 text-amber-500', defaultScore: 72 },
@@ -72,99 +83,182 @@ export default function MasteryDashboardPage() {
       <AppSidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 p-8 sm:p-10 max-w-6xl">
-        {/* Top Header Row with Avatar 'S' */}
-        <div className="flex items-center justify-between pb-8">
+      <main className="flex-1 p-6 sm:p-10 max-w-6xl mx-auto w-full">
+        {/* Top Header Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6">
           <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${tier.badgeColor}`}>
+                {tier.icon} {currentAccount.league} League
+              </span>
+              <span className="text-xs text-slate-400 font-medium">
+                Level {levelInfo.level} • {levelInfo.title}
+              </span>
+            </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Welcome back, {userName}!
+              Welcome back, {currentAccount.name}!
             </h1>
-            <p className="text-sm text-slate-500 mt-1">Here&apos;s your DSA learning overview and question bank health.</p>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Your personalized algorithmic mastery dashboard and daily engagement hub.
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={refreshRecommendation}
               title="Refresh Adaptive Recommendation"
-              className="p-2.5 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 shadow-sm transition-all"
+              className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 shadow-xs transition-all"
             >
               <RotateCw className="h-4 w-4" />
             </button>
 
             {/* User Avatar Circle */}
-            <Link href="/profile" className="h-11 w-11 rounded-full bg-indigo-600 text-white font-bold text-base flex items-center justify-center shadow-md shadow-indigo-200 hover:scale-105 transition-transform">
-              {userName ? userName.charAt(0).toUpperCase() : 'S'}
+            <Link 
+              href="/profile" 
+              className="h-11 w-11 rounded-2xl bg-indigo-600 text-white font-bold text-base flex items-center justify-center shadow-md shadow-indigo-100 hover:scale-105 transition-transform"
+            >
+              {currentAccount.name.charAt(0).toUpperCase()}
             </Link>
           </div>
         </div>
 
         {/* =========================================================================
-            QUESTION BANK INVENTORY & EXHAUSTION-PROOF INDICATOR (Requirement 9)
+            GAMIFICATION HERO BAR: LEVEL, XP & STREAK
         ========================================================================= */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-3 px-1">
-            <div className="flex items-center gap-2">
-              <Database className="h-4 w-4 text-indigo-600" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">Adaptive Question Bank Health</h2>
-            </div>
-            <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Exhaustion-Proof Active
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* 1. Available Questions */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-              <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
-                <span>Available Questions</span>
-                <Layers className="h-4 w-4 text-slate-400" />
+        <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+            {/* Level & XP Progress */}
+            <div className="space-y-2 md:col-span-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                <div className="flex items-center gap-2">
+                  <span className="h-6 w-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                    ⚡
+                  </span>
+                  <span>Level {levelInfo.level}: {levelInfo.title}</span>
+                </div>
+                <span className="text-indigo-600">{xp} Total XP</span>
               </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-extrabold text-slate-900">{inventory.totalAvailable}</span>
-                <span className="text-[11px] text-slate-400 font-medium">({inventory.totalCoreVerified} verified core)</span>
+              <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full transition-all duration-700" 
+                  style={{ width: `${levelInfo.progressPercent}%` }}
+                />
               </div>
-            </div>
-
-            {/* 2. Solved Questions */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-              <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
-                <span>Solved Questions</span>
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-extrabold text-slate-900">{inventory.totalSolved}</span>
-                <span className="text-[11px] text-slate-400 font-medium">completed</span>
+              <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+                <span>{levelInfo.currentLevelXp} XP in this level</span>
+                <span>{levelInfo.nextLevelXp - levelInfo.currentLevelXp} XP to Level {levelInfo.level + 1}</span>
               </div>
             </div>
 
-            {/* 3. Revision-Due Questions */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-              <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
-                <span>Revision-Due</span>
-                <Flame className="h-4 w-4 text-amber-500" />
+            {/* Rank & Streak Counter */}
+            <div className="flex items-center justify-between md:justify-end gap-6 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 md:pl-6">
+              <div className="text-center md:text-right">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Leaderboard</span>
+                <span className="text-xl font-black text-slate-900">#{myRankEntry.rank}</span>
+                <span className="text-[10px] text-indigo-600 font-semibold block">{currentAccount.league}</span>
               </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-extrabold text-slate-900">{inventory.revisionDueCount}</span>
-                <span className="text-[11px] text-slate-400 font-medium">spaced review</span>
-              </div>
-            </div>
 
-            {/* 4. Validated Generated Questions */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm bg-gradient-to-br from-white to-indigo-50/30">
-              <div className="flex items-center justify-between text-indigo-600 text-xs font-bold">
-                <span className="flex items-center gap-1">
-                  <Wand2 className="h-3.5 w-3.5" />
-                  Validated Generated
+              <div className="text-center md:text-right">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Daily Streak</span>
+                <span className="text-xl font-black text-amber-500 flex items-center gap-1">
+                  🔥 {currentAccount.streak}d
                 </span>
-                <span className="h-2 w-2 rounded-full bg-indigo-500 animate-ping" />
-              </div>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-extrabold text-indigo-900">{inventory.totalGeneratedValidated}</span>
-                <span className="text-[11px] text-indigo-600 font-medium">sandbox verified</span>
+                <span className="text-[10px] text-slate-500 font-medium block">
+                  Best: {currentAccount.longestStreak}d
+                </span>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* =========================================================================
+            3 HIGH-ENGAGEMENT ACTION CARDS (Quiz, Leaderboard, Lounge)
+        ========================================================================= */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          {/* Card 1: Daily Blitz */}
+          <Link
+            href="/daily-quiz"
+            className="group bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white p-6 rounded-3xl border border-amber-200/80 shadow-xs hover:shadow-md hover:border-amber-400 transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="h-10 w-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-xl shadow-sm">
+                  🔥
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                  {dailyQuizResult ? 'Completed Today' : '+110 XP Available'}
+                </span>
+              </div>
+              <h3 className="font-bold text-slate-900 text-base group-hover:text-amber-600 transition-colors">
+                Daily DSA Blitz
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                3 quick algorithmic MCQs. Keep your streak burning and claim daily bonus points.
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-amber-100 flex items-center justify-between text-xs font-bold text-amber-700">
+              <span>{dailyQuizResult ? 'Review Today\'s Quiz' : 'Start Blitz (2 mins)'}</span>
+              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {/* Card 2: Leaderboard Arena */}
+          <Link
+            href="/leaderboard"
+            className="group bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-white p-6 rounded-3xl border border-indigo-200/80 shadow-xs hover:shadow-md hover:border-indigo-400 transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="h-10 w-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-sm">
+                  🏆
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                  Global Arena
+                </span>
+              </div>
+              <h3 className="font-bold text-slate-900 text-base group-hover:text-indigo-600 transition-colors">
+                Arena Leaderboard
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                You are currently ranked <span className="font-bold text-indigo-600">#{myRankEntry.rank}</span>. Climb into the Top 3 to earn the Grandmaster Crown!
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-indigo-100 flex items-center justify-between text-xs font-bold text-indigo-700">
+              <span>View Top Standings</span>
+              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {/* Card 3: Discord Code Lounge */}
+          <Link
+            href="/lounge"
+            className="group bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-3xl border border-slate-700 text-white shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="h-10 w-10 rounded-2xl bg-indigo-500 text-white flex items-center justify-center text-xl shadow-sm">
+                  💬
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  48 Online
+                </span>
+              </div>
+              <h3 className="font-bold text-white text-base group-hover:text-indigo-300 transition-colors">
+                Code Lounge (Community)
+              </h3>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                Discord-style channels. Ask <span className="text-indigo-400 font-bold">@CodeAdaptBot</span> for algorithm hints, flex solutions, and study in lo-fi rooms.
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-700 flex items-center justify-between text-xs font-bold text-indigo-300">
+              <span>Enter Lounge</span>
+              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
         </div>
 
         {/* Recommended Next Problem Card */}
@@ -172,7 +266,7 @@ export default function MasteryDashboardPage() {
           <div className="flex items-center justify-between pb-4">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-indigo-600" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Recommended next problem</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Recommended Next Problem</h3>
             </div>
             
             {/* Provenance Badge */}
@@ -214,8 +308,8 @@ export default function MasteryDashboardPage() {
                   <Clock className="h-3.5 w-3.5" />
                   <span>{currentRecommendation.problem.estimatedMinutes} min</span>
                 </span>
-                <span className="text-xs text-slate-400">
-                  Tier {currentRecommendation.tier} Resolution
+                <span className="text-xs text-amber-600 font-bold">
+                  +{currentRecommendation.problem.difficulty === 'EASY' ? 50 : currentRecommendation.problem.difficulty === 'MEDIUM' ? 100 : 200} XP
                 </span>
               </div>
 
@@ -227,17 +321,15 @@ export default function MasteryDashboardPage() {
 
             <Link
               href={`/problems/${currentRecommendation.problem.id}`}
-              className="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-200 flex items-center justify-center gap-2 transition-all hover:scale-105 shrink-0"
+              className="px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-200 flex items-center justify-center gap-2 transition-all hover:scale-105 shrink-0"
             >
-              <span>Open problem workspace</span>
+              <span>Open Problem Workspace</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
 
-        {/* =========================================================================
-            SPACED REPETITION & REVISION QUEUE (PRD Epic 9)
-        ========================================================================= */}
+        {/* Spaced Repetition Due */}
         {revisionDueIds.length > 0 && (
           <div className="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-6 sm:p-7 mb-8">
             <div className="flex items-center justify-between pb-3 border-b border-amber-500/20 mb-4">
@@ -248,12 +340,12 @@ export default function MasteryDashboardPage() {
                 </h3>
               </div>
               <span className="text-xs font-semibold text-amber-800 bg-amber-200/60 px-2.5 py-0.5 rounded-full">
-                Ebbinghaus SM-2 Active
+                Ebbinghaus Memory Active
               </span>
             </div>
 
             <p className="text-xs text-amber-900/80 mb-4 leading-relaxed">
-              Based on your mastery memory decay curves, practicing these problems today reinforces long-term retention before your next difficulty level.
+              Based on your memory retention decay curve, solving these reinforces long-term recall and earns +30 XP bonus!
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -293,9 +385,7 @@ export default function MasteryDashboardPage() {
           </div>
         )}
 
-        {/* =========================================================================
-            GENUINE ACTIVITY HEATMAP MATRIX
-        ========================================================================= */}
+        {/* Activity Heatmap */}
         <div className="mb-8">
           <ActivityHeatmap
             activityDays={activityDays}
@@ -305,12 +395,12 @@ export default function MasteryDashboardPage() {
           />
         </div>
 
-        {/* Middle Section: Topic Mastery Cards */}
+        {/* Topic Mastery Cards */}
         <div className="bg-white p-7 rounded-3xl border border-slate-100 shadow-sm mb-8">
           <div className="flex items-center justify-between pb-6 border-b border-slate-100">
             <div>
               <h2 className="text-base font-bold text-slate-900">Topic Mastery & Progress</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Continuous rolling updates across all 10 DSA curriculum topics</p>
+              <p className="text-xs text-slate-400 mt-0.5">Continuous rolling mastery tracking across all 10 DSA curriculum topics</p>
             </div>
             <span className="text-xs text-slate-400 font-medium">Points / 100</span>
           </div>
