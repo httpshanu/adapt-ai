@@ -41,6 +41,7 @@ import {
 } from '../lib/communityData';
 import { getTodayDateKey } from '../lib/dailyQuizData';
 import { calculateEloChange } from '../lib/duelEngine';
+import { syncUserToSupabase, syncQuizToSupabase } from '../lib/supabaseSync';
 
 export interface AppContextType {
   // Account Management
@@ -453,10 +454,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem('codeadapt_all_accounts', JSON.stringify(accounts));
       localStorage.setItem('codeadapt_active_account_id', currentAccountId);
+      if (currentAccount) {
+        syncUserToSupabase(currentAccount);
+      }
     } catch {
       // ignore
     }
-  }, [accounts, currentAccountId]);
+  }, [accounts, currentAccountId, currentAccount]);
 
   // Save current account learning data whenever it updates
   useEffect(() => {
@@ -586,6 +590,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         `codeadapt_user_${currentAccountId}_quiz_${getTodayDateKey()}`,
         JSON.stringify(result)
       );
+      syncQuizToSupabase(currentAccountId, result);
     } catch {
       // ignore
     }

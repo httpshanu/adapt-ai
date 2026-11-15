@@ -1,0 +1,125 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                  String   @id @default(uuid())
+  uid                 String   @unique // e.g. "CA-1001"
+  name                String
+  email               String   @unique
+  avatar              String   @default("sanidhya")
+  role                String   @default("student") // student | competitive | mentor
+  level               Int      @default(1)
+  xp                  Int      @default(0)
+  streak              Int      @default(0)
+  longestStreak       Int      @default(0)
+  league              String   @default("Bronze") // Bronze | Silver | Gold | Diamond | Grandmaster
+  badges              String[] @default(["First Blood"])
+  solvedCount         Int      @default(0)
+  diagnosticCompleted Boolean  @default(false)
+  eloRating           Int      @default(1200)
+  duelWins            Int      @default(0)
+  duelLosses          Int      @default(0)
+  bugsFixed           Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  submissions         Submission[]
+  topicMasteries      TopicMastery[]
+  dailyQuizResults    DailyQuizResult[]
+  chatMessages        ChatMessage[]
+}
+
+model TopicMastery {
+  id                   String   @id @default(uuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic                String   // arrays, strings, etc.
+  topicName            String
+  score                Float    @default(0.0)
+  isProvisional        Boolean  @default(true)
+  evidenceCount        Int      @default(0)
+  consecutiveSuccesses Int      @default(0)
+  consecutiveFailures  Int      @default(0)
+  status               String   @default("Needs Foundation")
+  needsRevision        Boolean  @default(false)
+  updatedAt            DateTime @updatedAt
+
+  @@unique([userId, topic])
+  @@index([userId])
+}
+
+model Submission {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problemId    String
+  problemTitle String
+  topic        String
+  code         String   @db.Text
+  language     String   // python | cpp | java
+  verdict      String   // ACCEPTED | WRONG_ANSWER | TLE | etc.
+  passedTests  Int      @default(0)
+  totalTests   Int      @default(0)
+  runtimeMs    Float    @default(0.0)
+  memoryMb     Float    @default(0.0)
+  hintsUsed    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([problemId])
+}
+
+model DailyQuizResult {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        String   // YYYY-MM-DD
+  score       Int
+  total       Int
+  xpEarned    Int
+  completedAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id           String   @id @default(uuid())
+  channelId    String
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authorName   String
+  authorAvatar String
+  authorUid    String
+  authorBadge  String?
+  content      String   @db.Text
+  codeSnippet  String?  @db.Text
+  codeLanguage String?
+  reactions    Json?    @default("{}")
+  createdAt    DateTime @default(now())
+
+  @@index([channelId])
+  @@index([userId])
+}
+
+model DuelMatch {
+  id               String   @id @default(uuid())
+  player1Id        String
+  player2Id        String
+  problemId        String
+  winnerId         String?
+  player1EloChange Int      @default(0)
+  player2EloChange Int      @default(0)
+  timeTakenSeconds Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  @@index([player1Id])
+  @@index([player2Id])
+}
